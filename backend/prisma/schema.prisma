@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int             @id @default(autoincrement())
+  name         String
+  email        String          @unique
+  passwordHash String
+  role         Role            @default(AGENT)
+  createdAt    DateTime        @default(now())
+  assignments  FieldAssignment[]
+  updates      FieldUpdate[]
+}
+
+model Field {
+  id           Int             @id @default(autoincrement())
+  name         String
+  cropType     String
+  plantingDate DateTime
+  stage        Stage           @default(PLANTED)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  assignments  FieldAssignment[]
+  updates      FieldUpdate[]
+}
+
+model FieldAssignment {
+  id         Int      @id @default(autoincrement())
+  field      Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId    Int
+  agent      User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId    Int
+  assignedAt DateTime @default(now())
+
+  @@unique([fieldId, agentId])
+}
+
+model FieldUpdate {
+  id        Int      @id @default(autoincrement())
+  field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId   Int
+  agent     User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId   Int
+  stage     Stage
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum Stage {
+  PLANTED
+  GROWING
+  READY
+  HARVESTED
+}
